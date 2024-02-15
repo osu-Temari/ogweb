@@ -48,6 +48,9 @@ class BeatmapsController extends Controller
 
     private static function beatmapScores(string $id, ?string $scoreTransformerType, ?bool $isLegacy): array
     {
+        $bullshit = new BeatmapSeeder();
+        $bullshit->getFromActualApi($id);
+
         $beatmap = Beatmap::findOrFail($id);
         if ($beatmap->approved <= 0) {
             return ['scores' => []];
@@ -299,6 +302,8 @@ class BeatmapsController extends Controller
      */
     public function show($id)
     {
+        $bullshit = new BeatmapSeeder();
+        $bullshit->getFromActualApi($id);
         $beatmap = Beatmap::whereHas('beatmapset')->findOrFail($id);
 
         if (is_api_request()) {
@@ -350,6 +355,8 @@ class BeatmapsController extends Controller
      */
     public function scores($id)
     {
+        $bullshit = new BeatmapSeeder();
+        $bullshit->getFromActualApi($id);
         return static::beatmapScores(
             $id,
             null,
@@ -378,6 +385,8 @@ class BeatmapsController extends Controller
      */
     public function soloScores($id)
     {
+        $bullshit = new BeatmapSeeder();
+        $bullshit->getFromActualApi($id);
         return static::beatmapScores($id, ScoreTransformer::TYPE_SOLO, null);
     }
 
@@ -429,6 +438,8 @@ class BeatmapsController extends Controller
      */
     public function userScore($beatmapId, $userId)
     {
+        $bullshit = new BeatmapSeeder();
+        $bullshit->getFromActualApi($beatmapId);
         $beatmap = Beatmap::scoreable()->findOrFail($beatmapId);
 
         $params = get_params(request()->all(), null, [
@@ -486,6 +497,8 @@ class BeatmapsController extends Controller
      */
     public function userScoreAll($beatmapId, $userId)
     {
+        $bullshit = new BeatmapSeeder();
+        $bullshit->getFromActualApi($beatmapId);
         $beatmap = Beatmap::scoreable()->findOrFail($beatmapId);
         $mode = presence(get_string(request('mode'))) ?? $beatmap->mode;
         $params = ScoreSearchParams::fromArray([

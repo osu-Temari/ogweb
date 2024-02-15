@@ -13,7 +13,7 @@ use App\Libraries\Search\BeatmapsetSearchCached;
 use App\Libraries\Search\BeatmapsetSearchRequestParams;
 use App\Models\Beatmap;
 use App\Models\BeatmapDownload;
-use App\Models\BeatmapMirror;
+use App\Models\BeatmaFpMirror;
 use App\Models\Beatmapset;
 use App\Models\BeatmapsetEvent;
 use App\Models\BeatmapsetWatch;

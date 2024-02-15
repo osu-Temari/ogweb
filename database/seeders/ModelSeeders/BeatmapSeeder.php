@@ -113,14 +113,85 @@ class BeatmapSeeder extends Seeder
         }
     }
 
+    public function getFromActualApi($bid)
+    {
+        $base_url = 'https://osu.ppy.sh/api/';
+        $api_key = env('OSU_API_KEY', null);
+        if (empty($api_key)) {
+            $this->command->error('Error: No OSU_API_KEY value set in .env file. Can\'t seed beatmap data!');
+
+            return;
+        }
+        $api = '&k='.$api_key;
+
+        // get beatmaps
+        try {
+            $json = json_decode(file_get_contents($base_url.'get_beatmaps?b='.$bid.$api));
+        } catch (Exception $ex) {
+            if ($this->command) {
+                $this->command->error('Unable to fetch Beatmap data');
+                $this->command->error($ex->getMessage());
+
+                return;
+            }
+
+            throw $ex;
+        }
+
+        $sets = $this->populateExisting($json);
+
+        foreach ($json as $item) {
+            $beatmapset = $this->beatmapsets[$item->beatmapset_id] ?? null;
+            $beatmap = $this->beatmaps[$item->beatmap_id] ?? null;
+
+            if ($beatmapset === null) {
+                $beatmapset = $this->createBeatmapset($item);
+
+                // technically shouldn't exist if new...
+                if (!array_key_exists($beatmapset->beatmapset_id, $sets)) {
+                    $sets[$beatmapset->beatmapset_id] = [];
+                }
+                $newBeatmapsetsCount++;
+            }
+            $this->beatmapsets[$beatmapset->beatmapset_id] = $beatmapset;
+
+            if ($beatmap === null) {
+                $beatmap = $this->createBeatmap($item);
+
+                // don't bother checking if it exists, just add it.
+                $sets[$beatmap->beatmapset_id][] = $beatmap->beatmap_id;
+                $newBeatmapsCount++;
+            }
+            $this->beatmaps[$beatmap->beatmap_id] = $beatmap;
+
+            $this->createFailtimes($beatmap);
+            $this->createDifficulty($beatmap);
+        }
+
+        foreach ($sets as $setId => $mapIds) {
+            $uniqueMapIds = array_unique($mapIds);
+            $setPlaycount = 0;
+            $names = [];
+            foreach ($uniqueMapIds as $mapId) {
+                $beatmap = $this->beatmaps[$mapId];
+                $setPlaycount += $beatmap->playcount;
+                $names[] = $beatmap->version.'@'.$beatmap->playmode;
+            }
+
+            $beatmapset = $this->beatmapsets[$setId];
+            $beatmapset->versions_available = count($uniqueMapIds);
+            $beatmapset->play_count = $setPlaycount;
+            $beatmapset->difficulty_names = implode(',', $names);
+            $beatmapset->save();
+        }
+    }
+
     private function createBeatmap($json)
     {
-        $user = $this->randomUser();
-
         return Beatmap::create([
             'beatmap_id' => $json->beatmap_id,
             'beatmapset_id' => $json->beatmapset_id,
-            'filename' => "{$json->artist} - {$json->title} ({$user->username}) [{$json->version}].osu",
+            'filename' => "{$json->artist} - {$json->title} (rip) [{$json->version}].osu",
             'checksum' => $json->file_md5,
             'version' => $json->version,
             'total_length' => $json->total_length,
@@ -136,9 +207,9 @@ class BeatmapSeeder extends Seeder
             'playmode' => $json->mode,
             'approved' => $json->approved,
             'difficultyrating' => $json->difficultyrating,
-            'playcount' => $json->playcount,
-            'passcount' => $json->passcount,
-            'user_id' => $user->getKey(),
+            'playcount' => 0,
+            'passcount' => 0,
+            'user_id' => 156,
         ]);
     }
 
@@ -153,7 +224,7 @@ class BeatmapSeeder extends Seeder
             'source' => $json->source,
             'tags' => $json->tags,
             'bpm' => $json->bpm,
-            'approved' => $json->approved,
+            'approved' => 1,
             'approved_date' => $json->approved_date,
             'genre_id' => $json->genre_id,
             'language_id' => $json->language_id,
@@ -161,7 +232,7 @@ class BeatmapSeeder extends Seeder
             'difficulty_names' => '',
             'play_count' => 0,
             'favourite_count' => $json->favourite_count,
-            'user_id' => $this->randomUser()->getKey(),
+            'user_id' => 156,
             'submit_date' => Carbon::now(),
         ]);
     }

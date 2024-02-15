@@ -11,6 +11,7 @@ use App\Libraries\ClientCheck;
 use App\Models\Beatmap;
 use App\Models\ScoreToken;
 use App\Transformers\ScoreTokenTransformer;
+use Database\Seeders\ModelSeeders\BeatmapSeeder;
 use PDOException;
 
 class ScoreTokensController extends BaseController
@@ -26,7 +27,15 @@ class ScoreTokensController extends BaseController
             abort(422, 'score submission is disabled');
         }
 
-        $beatmap = Beatmap::increasesStatistics()->findOrFail($beatmapId);
+
+        try {
+            $beatmap = Beatmap::increasesStatistics()->findOrFail($beatmapId);
+        } catch (Exception $ex) {
+            $seeder = new BeatmapSeeder();
+            $seeder->getFromActualApi($beatmapId);
+            $beatmap = Beatmap::increasesStatistics()->findOrFail($beatmapId);
+        }
+
         $user = auth()->user();
         $request = \Request::instance();
         $params = get_params($request->all(), null, [

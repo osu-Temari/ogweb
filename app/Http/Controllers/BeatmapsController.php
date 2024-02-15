@@ -17,6 +17,7 @@ use App\Models\Beatmap;
 use App\Models\BeatmapsetEvent;
 use App\Models\User;
 use App\Transformers\BeatmapTransformer;
+use Database\Seeders\ModelSeeders\BeatmapSeeder;
 use App\Transformers\ScoreTransformer;
 
 /**
@@ -266,6 +267,8 @@ class BeatmapsController extends Controller
         }
 
         if (!isset($beatmap)) {
+            $bullshit = new BeatmapSeeder();
+            $bullshit->getFromActualApi($params["id"]);
             abort(404);
         }
 

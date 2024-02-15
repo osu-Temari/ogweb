@@ -110,11 +110,9 @@
             >
                 @yield('permanent-fixed-footer')
 
-                @if ($GLOBALS['cfg']['osu']['is_development_deploy'])
-                    <div class="development-deploy-footer">
-                        This is a development instance of the <a href="https://osu.ppy.sh" class="development-deploy-footer__link">osu! website</a>. Please do not login with your osu! credentials.
-                    </div>
-                @endif
+                <div class="development-deploy-footer">
+                    this aint osu lol
+                </div>
             </div>
         </div>
 
